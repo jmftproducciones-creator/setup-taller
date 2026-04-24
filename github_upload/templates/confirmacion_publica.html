@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirmacion de orden</title>
+  <style>
+    :root{
+      --bg:#f4f4ef;
+      --panel:#ffffff;
+      --txt:#171717;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --ok:#127c56;
+      --no:#a73333;
+      --brand:#ff7a00;
+      --brand-dark:#151515;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Segoe UI, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,122,0,.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(0,0,0,.08), transparent 20%),
+        var(--bg);
+      color:var(--txt);
+    }
+    .wrap{
+      max-width:900px;
+      margin:32px auto;
+      padding:0 18px 32px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:0 20px 45px rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .hero{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      padding:24px 26px;
+      background:linear-gradient(135deg, rgba(255,122,0,.14), rgba(255,255,255,.96));
+      border-bottom:1px solid var(--line);
+    }
+    .eyebrow{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:var(--brand);
+      font-weight:700;
+    }
+    h1{
+      margin:8px 0 10px;
+      font-size:30px;
+      line-height:1.1;
+    }
+    p{margin:0 0 10px}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:8px 14px;
+      font-size:13px;
+      font-weight:700;
+      border:1px solid var(--line);
+      background:#fff;
+    }
+    .badge.ok{color:var(--ok); border-color:rgba(18,124,86,.26); background:rgba(18,124,86,.08)}
+    .badge.no{color:var(--no); border-color:rgba(167,51,51,.26); background:rgba(167,51,51,.08)}
+    .badge.pending{color:var(--brand-dark); border-color:rgba(255,122,0,.22); background:rgba(255,122,0,.12)}
+    .content{
+      padding:24px 26px 28px;
+      display:grid;
+      gap:18px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+      gap:14px;
+    }
+    .box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 16px;
+      background:#fcfcfc;
+    }
+    .box strong{
+      display:block;
+      margin-bottom:6px;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+    }
+    .desc{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      background:#fffdfa;
+    }
+    .desc h2{
+      margin:0 0 14px;
+      font-size:18px;
+    }
+    .desc-row{
+      display:grid;
+      grid-template-columns:180px 1fr;
+      gap:10px;
+      padding:8px 0;
+      border-bottom:1px dashed var(--line);
+    }
+    .desc-row:last-child{border-bottom:none}
+    .desc-row span:first-child{
+      font-weight:700;
+      color:#404040;
+    }
+    .actions{
+      display:grid;
+      gap:12px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      background:#fff;
+    }
+    .actions input,.actions textarea{
+      width:100%;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      padding:11px 12px;
+      font:inherit;
+    }
+    .buttons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn-ok{background:var(--ok); color:#fff}
+    .btn-no{background:var(--no); color:#fff}
+    .btn-alt{background:#111; color:#fff}
+    .result{
+      min-height:22px;
+      font-size:14px;
+      color:var(--muted);
+    }
+    .invalid{
+      padding:60px 28px;
+      text-align:center;
+    }
+    @media (max-width: 640px){
+      .hero{padding:20px}
+      .content{padding:20px}
+      .desc-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      {% if not request_data %}
+      <div class="invalid">
+        <div class="eyebrow">Confirmacion invalida</div>
+        <h1>Este enlace no existe o ya no esta disponible</h1>
+        <p>Si necesitabas aprobar o rechazar una reparacion, pedi un nuevo enlace al taller.</p>
+      </div>
+      {% else %}
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Confirmacion de reparacion</div>
+          <h1>Orden #{{ order.id }}</h1>
+          <p>{{ order.nombre_contacto or 'Cliente' }} | {{ request_data.customer_phone or order.telefono_contacto or 'Sin telefono' }}</p>
+          <p>{{ request_data.customer_email or order.email_contacto or 'Sin email cargado' }}</p>
+        </div>
+        <div>
+          {% if status == 'CONFIRMADA' %}
+          <div class="badge ok">Solicitud confirmada</div>
+          {% elif status == 'RECHAZADA' %}
+          <div class="badge no">Solicitud rechazada</div>
+          {% elif status == 'VENCIDA' %}
+          <div class="badge no">Solicitud vencida</div>
+          {% elif status == 'REEMPLAZADA' %}
+          <div class="badge no">Solicitud reemplazada</div>
+          {% else %}
+          <div class="badge pending">Pendiente de respuesta</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="grid">
+          <div class="box">
+            <strong>Sucursal</strong>
+            {{ order.sucursal_nombre or request_data.sucursal_key }}
+          </div>
+          <div class="box">
+            <strong>Estado actual al solicitar</strong>
+            {{ request_data.order_status_snapshot or order.estado or '-' }}
+          </div>
+          <div class="box">
+            <strong>Solicitado por</strong>
+            {{ request_data.requested_by_name or request_data.requested_by or 'Sistema' }}
+          </div>
+          <div class="box">
+            <strong>Vencimiento</strong>
+            {{ request_data.expires_at or 'Sin vencimiento' }}
+          </div>
+        </div>
+
+        <div class="desc">
+          <h2>Resumen de la orden</h2>
+          <div class="desc-row"><span>Equipo</span><span>{{ order.equipo_texto or '-' }}</span></div>
+          <div class="desc-row"><span>Serie</span><span>{{ order.serie_texto or '-' }}</span></div>
+          <div class="desc-row"><span>Falla</span><span>{{ order.falla or '-' }}</span></div>
+          <div class="desc-row"><span>Observaciones</span><span>{{ order.observaciones or '-' }}</span></div>
+          <div class="desc-row"><span>Accesorios</span><span>{{ order.accesorios or '-' }}</span></div>
+          <div class="desc-row"><span>Reparacion prevista</span><span>{{ order.reparacion or '-' }}</span></div>
+          <div class="desc-row"><span>Repuestos</span><span>{{ order.repuestos or '-' }}</span></div>
+          <div class="desc-row"><span>Importe estimado</span><span>{{ order.importe or '-' }}</span></div>
+          {% if request_data.message_text %}
+          <div class="desc-row"><span>Mensaje del taller</span><span>{{ request_data.message_text }}</span></div>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          {% if status == 'PENDIENTE' %}
+          <label>
+            <strong>Tu nombre</strong>
+            <input id="responderName" type="text" placeholder="Opcional">
+          </label>
+          <label>
+            <strong>Comentario</strong>
+            <textarea id="decisionNote" rows="4" placeholder="Opcional, por ejemplo motivo o aclaracion"></textarea>
+          </label>
+          <div class="buttons">
+            <button class="btn-ok" data-decision="confirmar">Confirmar reparacion</button>
+            <button class="btn-no" data-decision="rechazar">No continuar</button>
+          </div>
+          <div id="decisionResult" class="result"></div>
+          {% else %}
+          <div class="result">
+            {% if status == 'CONFIRMADA' %}
+            La orden fue confirmada correctamente.
+            {% elif status == 'RECHAZADA' %}
+            La reparacion fue rechazada. El taller ya puede ver tu respuesta.
+            {% elif status == 'VENCIDA' %}
+            Este enlace vencio. Pedi uno nuevo al taller.
+            {% else %}
+            Esta solicitud ya no admite cambios.
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if request_data %}
+  <script>
+    (function () {
+      const result = document.getElementById("decisionResult");
+      document.querySelectorAll("[data-decision]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const decision = btn.dataset.decision;
+          const responderName = document.getElementById("responderName")?.value || "";
+          const note = document.getElementById("decisionNote")?.value || "";
+          btn.disabled = true;
+          try {
+            const resp = await fetch("{{ url_for('confirmaciones.confirmation_public_resolve', token=request_data.token) }}", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ decision, responder_name: responderName, note })
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.ok === false) {
+              throw new Error(data.error || "No se pudo registrar la respuesta");
+            }
+            if (result) result.textContent = data.message || "Respuesta registrada";
+            window.location.reload();
+          } catch (err) {
+            if (result) result.textContent = err.message;
+            btn.disabled = false;
+          }
+        });
+      });
+    })();
+  </script>
+  {% endif %}
+</body>
+</html>
